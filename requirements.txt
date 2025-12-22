@@ -1,0 +1,6 @@
+telethon
+sqlalchemy
+psycopg2-binary
+python-dotenv
+thefuzz
+python-Levenshtein

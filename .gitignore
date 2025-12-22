@@ -1,0 +1,14 @@
+# Segredos e Configurações
+.env
+*.session
+*.session-journal
+
+# Dados do Docker e Banco
+postgres_data/
+data/
+__pycache__/
+*.pyc
+
+# Logs e arquivos do sistema
+*.log
+.DS_Store
