@@ -8,6 +8,7 @@ class Keyword(Base):
     __tablename__ = 'keywords'
     id = Column(Integer, primary_key=True)
     word = Column(String, unique=True, nullable=False)
+    max_price = Column(Float, nullable=True)
     created_at = Column(DateTime, server_default=func.now())
 
 class MessageLog(Base):
@@ -25,7 +26,7 @@ class NegativeKeyword(Base):
 class MatchLog(Base):
     __tablename__ = 'match_logs'
     id = Column(Integer, primary_key=True)
-    keyword_id = Column(Integer, ForeignKey('keywords.id'))
+    keyword_id = Column(Integer, ForeignKey('keywords.id', ondelete='CASCADE'))
     channel_id = Column(String)
     content_preview = Column(String)
     price_extracted = Column(Float, nullable=True) # Novo: Preço capturado

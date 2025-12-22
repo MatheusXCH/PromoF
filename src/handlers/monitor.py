@@ -1,11 +1,13 @@
 import hashlib
 from config import DESTINO
 from models import Keyword, NegativeKeyword, MessageLog, MatchLog
-from utils import extract_price, is_fuzzy_match
+from utils import extract_price, is_fuzzy_match, identify_store
 
 async def handle_promotion_filter(event, client, db):
-    texto_lower = event.raw_text.lower()
-    texto_words = texto_lower.split()
+    texto_raw = event.raw_text
+    texto_lower = texto_raw.lower()
+    preco_atual = extract_price(texto_raw)
+    loja_tag = identify_store(texto_raw)
 
     # 1. Filtro de Negativas
     negativas = [n.word for n in db.query(NegativeKeyword).all()]
@@ -19,34 +21,26 @@ async def handle_promotion_filter(event, client, db):
 
     # 3. Lógica de Match
     keywords = db.query(Keyword).all()
-    for kw_obj in keywords:
-        palavras_da_keyword = kw_obj.word.lower().split()
-        match_confirmado = all(
-            (p in texto_lower or is_fuzzy_match(p, texto_words)) 
-            for p in palavras_da_keyword
-        )
+    for kw in keywords:
+        palavras_req = kw.word.split()
+        match = all((p in texto_lower or is_fuzzy_match(p, texto_lower.split())) for p in palavras_req)
 
-        if match_confirmado:
-            usou_fuzzy = any(p not in texto_lower for p in palavras_da_keyword)
-            preco = extract_price(event.raw_text)
-            
-            # Persistência de Auditoria
-            db.add(MessageLog(msg_hash=msg_hash))
-            try:
-                chat = await event.get_chat()
-                origem = getattr(chat, 'title', f"ID: {event.chat_id}")
-            except: origem = "Origem Desconhecida"
+        if match:
+            # FILTRO DE FAIXA DE PREÇO
+            if kw.max_price and preco_atual:
+                if preco_atual > kw.max_price:
+                    print(f"⏩ Ignorado: {kw.word} (R$ {preco_atual} > R$ {kw.max_price})")
+                    continue
 
+            # SALVAR MATCH COM TAG DE LOJA
             db.add(MatchLog(
-                keyword_id=kw_obj.id, channel_id=origem,
-                content_preview=texto_lower[:100], price_extracted=preco, is_fuzzy=usou_fuzzy
+                keyword_id=kw.id,
+                channel_id=f"{loja_tag} | {event.chat_id}",
+                price_extracted=preco_atual,
+                content_preview=texto_lower[:100]
             ))
             db.commit()
 
-            # Forwarding
-            try:
-                await client.forward_messages(DESTINO, event.message)
-                print(f"🔥 Match: {kw_obj.word} | Preço: {preco}")
-            except Exception as e:
-                print(f"❌ Erro ao encaminhar: {e}")
+            await client.forward_messages(DESTINO, event.message)
+            print(f"🔥 {loja_tag} | Match: {kw.word} | Preço: {preco_atual}")
             break

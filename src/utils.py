@@ -20,3 +20,20 @@ def is_fuzzy_match(keyword_word, text_words, threshold=85):
         if fuzz.ratio(keyword_word, tw) >= threshold:
             return True
     return False
+
+# No arquivo src/utils.py
+STORES_MAP = {
+    'amazon.com': '📦 AMAZON',
+    'mercadolivre.com': '🤝 MERCADO LIVRE',
+    'magazineluiza.com': '🛒 MAGALU',
+    'kabum.com': '💥 KABUM',
+    'casasbahia.com': '🏠 CASAS BAHIA',
+    'ali-express.com': '🌏 ALIEXPRESS'
+}
+
+def identify_store(text):
+    """Identifica a loja através de links na mensagem."""
+    for domain, tag in STORES_MAP.items():
+        if domain in text.lower():
+            return tag
+    return "🛍️ OUTRA LOJA"
