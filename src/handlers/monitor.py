@@ -1,5 +1,7 @@
 import hashlib
+import io
 import logging
+from telethon import utils
 from config import DESTINO
 from models import Keyword, NegativeKeyword, MessageLog, MatchLog
 from utils import extract_price, is_fuzzy_match, identify_store
@@ -56,29 +58,44 @@ async def handle_promotion_filter(event, bot_client, db):
 
         if match:
             # Filtro de Teto de Preço
-            if kw.max_price and preco_atual:
-                if preco_atual > kw.max_price:
-                    continue
+            if kw.max_price and preco_atual and preco_atual > kw.max_price:
+                print(f"⏩ Ignorado por preço: {kw.word} (R$ {preco_atual})")
+                continue
 
-            # ━━━ SOLUÇÃO 2: NOTIFICAÇÃO VIA BOT API ━━━
-            # Montagem da mensagem formatada para garantir o som e banner no celular
-            msg_formatada = (
-                f"🔥 **{kw.word.upper()} ENCONTRADO!**\n"
-                f"─── ⋆ ───\n"
-                f"💰 **Preço:** `R$ {preco_atual if preco_atual else 'N/A'}`\n"
-                f"{loja_tag} | 📡 **Fonte:** `{origem_nome}`\n\n"
-                f"📝 **Resumo:**\n_{texto_raw[:300]}..._\n\n"
-                f"🔗 [ABRIR OFERTA ORIGINAL]({link_origem})"
-            )
+            chat = await event.get_chat()
+            nome_canal = getattr(chat, 'title', 'Origem Desconhecida')
+            item_alerta = kw.word.upper()
+            preco_str = f"R$ {preco_atual:.2f}" if preco_atual else "N/D"
+            
+            header = (
+                    f"📢 **FONTE:** `{nome_canal}`\n"
+                    f"🏷️ **ITEM:** `{item_alerta}`\n"
+                    f"💵 **PREÇO:** `{preco_str}`\n"
+                    f"─── ⋆ ───\n\n"
+                )
+            full_message = header + texto_raw
 
             try:
-                # O bot_client é quem realiza o envio no canal DESTINO
+
+                message_attachment = None
+
+                if event.message.media:
+                    file_buffer = io.BytesIO()
+                    await event.client.download_media(event.message, file=file_buffer)
+                    file_buffer.seek(0)
+                    
+                    extension = utils.get_extension(event.message.media)
+                    file_buffer.name = f"promo_{event.message.id}{extension}"
+                    message_attachment = file_buffer
+
                 await bot_client.send_message(
-                    DESTINO, 
-                    msg_formatada, 
-                    link_preview=False,
-                    parse_mode='markdown'
+                    entity=DESTINO,
+                    message=full_message,
+                    file=message_attachment,
+                    parse_mode='md'
                 )
+
+                print(f"✅ [MEMÓRIA] Notificação enviada: {kw.word.upper()}")
                 
                 # Persistência no PostgreSQL
                 db.add(MessageLog(msg_hash=msg_hash))
