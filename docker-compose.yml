@@ -16,6 +16,8 @@ services:
     build: .
     container_name: promof_bot
     restart: unless-stopped
+    environment:
+      PYTHONUNBUFFERED: 1
     depends_on:
       - db
     volumes:
