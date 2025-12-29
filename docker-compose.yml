@@ -11,6 +11,13 @@ services:
       - "5432:5432"
     volumes:
       - ./postgres_data:/var/lib/postgresql/data
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 512M
+        reservations:
+          memory: 128M
 
   promof-bot:
     build: .
@@ -25,3 +32,10 @@ services:
       - ./src:/app/src
     env_file:
       - .env
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 1G
+        reservations:
+          memory: 256M
