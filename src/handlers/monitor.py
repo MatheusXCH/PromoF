@@ -10,9 +10,18 @@ logger = logging.getLogger(__name__)
 
 async def handle_promotion_filter(event, bot_client, db):
     """
-    Pipeline de Ingestão: Captura mensagens via UserBot e notifica via Bot API.
-    Filtra ruídos de comentários/threads e duplicatas.
+    Executa o pipeline de monitoramento, filtragem e notificação de promoções.
+
+    Analisa mensagens recebidas via UserBot, verifica duplicidade por MD5, valida palavras 
+    negativas e, em caso de match com palavras-chave, despacha uma notificação rica 
+    (com mídia) através do Bot API.
+
+    Args:
+        event (NewMessage.Event): O evento de nova mensagem capturado pelo Telethon.
+        bot_client (TelegramClient): Cliente instanciado para o Bot API (Notificador).
+        db (Session): Sessão ativa do banco de dados para persistência de logs e consultas.
     """
+    
     if event.is_reply:
         return
 

@@ -3,9 +3,31 @@ from sqlalchemy import func, desc
 from models import Keyword, NegativeKeyword, MatchLog
 
 def get_header(title, emoji):
+    """
+    Gera um cabeçalho estilizado para mensagens de interface administrativa.
+
+    Args:
+        title (str): O título da seção.
+        emoji (str): O emoji a ser exibido ao lado do título.
+
+    Returns:
+        str: String formatada em Markdown com bordas visuais.
+    """
+    
     return f"{emoji} ━━━ **{title.upper()}** ━━━\n"
 
 async def handle_admin_commands(event, db):
+    """
+    Interpreta e executa comandos administrativos enviados por chat privado.
+
+    Gerencia a lógica de CRUD para palavras-chave, monitoramento de estatísticas de performance 
+    e consulta ao histórico de capturas recentes.
+
+    Args:
+        event (NewMessage.Event): O evento contendo o comando (ex: .add, .list).
+        db (Session): Sessão do banco de dados para manipulação das tabelas de configuração.
+    """
+    
     raw_text = event.raw_text
     parts = raw_text.split()
     if not parts: return
