@@ -3,7 +3,7 @@ import sys
 import re
 from thefuzz import fuzz
 
-PRICE_REGEX = r'(?:R\$|r\$)\s?(\d{1,3}(?:\.\d{3})*(?:,\d{2})?)'
+PRICE_REGEX = r'(?:R\$|r\$)\s?(\d+(?:[\.,]\d+)*)'
 
 def extract_price(text):
     """Extrai o primeiro valor em R$ encontrado no texto."""
