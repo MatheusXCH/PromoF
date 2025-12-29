@@ -29,6 +29,6 @@ class MatchLog(Base):
     keyword_id = Column(Integer, ForeignKey('keywords.id', ondelete='CASCADE'))
     channel_id = Column(String)
     content_preview = Column(String)
-    price_extracted = Column(Float, nullable=True) # Novo: Preço capturado
-    is_fuzzy = Column(Boolean, default=False)      # Novo: Indica se foi match aproximado
+    price_extracted = Column(Float, nullable=True)
+    is_fuzzy = Column(Boolean, default=False)
     created_at = Column(DateTime, server_default=func.now())

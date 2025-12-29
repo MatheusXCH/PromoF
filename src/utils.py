@@ -1,3 +1,5 @@
+import logging
+import sys
 import re
 from thefuzz import fuzz
 
@@ -21,7 +23,6 @@ def is_fuzzy_match(keyword_word, text_words, threshold=85):
             return True
     return False
 
-# No arquivo src/utils.py
 STORES_MAP = {
     'amazon.com': '📦 AMAZON',
     'mercadolivre.com': '🤝 MERCADO LIVRE',
@@ -37,3 +38,18 @@ def identify_store(text):
         if domain in text.lower():
             return tag
     return "🛍️ OUTRA LOJA"
+
+def setup_logging():
+    LOG_FORMAT = "[APP - %(levelname)s] %(asctime)s - %(name)s - %(message)s"
+    
+    logging.basicConfig(
+        level=logging.INFO,
+        format=LOG_FORMAT,
+        datefmt="%Y-%m-%d %H:%M:%S",
+        handlers=[
+            logging.StreamHandler(sys.stdout)
+        ]
+    )
+    
+    logging.getLogger('telethon').setLevel(logging.WARNING)
+    logging.getLogger('sqlalchemy').setLevel(logging.WARNING)

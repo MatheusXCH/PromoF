@@ -2,7 +2,6 @@ import re
 from sqlalchemy import func, desc
 from models import Keyword, NegativeKeyword, MatchLog
 
-# Helper para padronização visual das respostas
 def get_header(title, emoji):
     return f"{emoji} ━━━ **{title.upper()}** ━━━\n"
 
@@ -13,7 +12,6 @@ async def handle_admin_commands(event, db):
     
     cmd = parts[0].lower()
     
-    # ━━━ COMANDO: .HELP ━━━
     if cmd == '.help':
         help_text = (
             f"{get_header('Central de Ajuda', '🤖')}\n"
@@ -31,14 +29,12 @@ async def handle_admin_commands(event, db):
         )
         await event.respond(help_text)
 
-    # ━━━ COMANDO: .ADD (Com Suporte a Preço -p) ━━━
     elif cmd == '.add' and len(parts) > 1:
         full_content = raw_text[len(cmd):].strip()
         max_price = None
         word = full_content
 
         if " -p " in full_content.lower():
-            # Separa o termo do preço usando a flag -p
             split_parts = re.split(r' -p ', full_content, flags=re.IGNORECASE, maxsplit=1)
             word = split_parts[0].strip().lower()
             try:
@@ -57,7 +53,6 @@ async def handle_admin_commands(event, db):
         else:
             await event.respond(f"⚠️ O termo `{word}` já está na lista.")
 
-    # ━━━ COMANDO: .LIST (Visual de Tabela) ━━━
     elif cmd == '.list':
         kws = db.query(Keyword).all()
         negs = db.query(NegativeKeyword).all()
@@ -76,9 +71,7 @@ async def handle_admin_commands(event, db):
             
         await event.respond(msg)
 
-    # ━━━ COMANDO: .REMOVE (Suporte a Termos Compostos) ━━━
     elif (cmd == '.remove' or cmd == '.del') and len(parts) > 1:
-        # Captura a string completa (ex: "placa de video")
         word = raw_text[len(cmd):].strip().lower()
         keyword_entry = db.query(Keyword).filter_by(word=word).first()
         
@@ -89,15 +82,12 @@ async def handle_admin_commands(event, db):
         else:
             await event.respond(f"⚠️ Termo **'{word}'** não encontrado.")
 
-    # ━━━ COMANDO: .STATS (Dashboard Agregado) ━━━
     elif cmd == '.stats':
         total = db.query(func.count(MatchLog.id)).scalar()
         
-        # Top Keyword (Join entre MatchLog e Keyword)
         top_kw = db.query(Keyword.word, func.count(MatchLog.id).label('cnt'))\
                    .join(MatchLog).group_by(Keyword.word).order_by(desc('cnt')).first()
 
-        # Top Canal Origem
         top_ch = db.query(MatchLog.channel_id, func.count(MatchLog.id).label('cnt'))\
                    .group_by(MatchLog.channel_id).order_by(desc('cnt')).first()
 
@@ -110,7 +100,6 @@ async def handle_admin_commands(event, db):
         )
         await event.respond(stats_msg)
 
-    # ━━━ COMANDO: .HISTORY ━━━
     elif cmd == '.history' and len(parts) > 1:
         search_word = raw_text[len(cmd):].strip().lower()
         kw = db.query(Keyword).filter_by(word=search_word).first()
@@ -134,7 +123,6 @@ async def handle_admin_commands(event, db):
         
         await event.respond("\n".join(res))
 
-    # ━━━ COMANDO: .NEG (Blacklist) ━━━
     elif cmd == '.neg' and len(parts) > 1:
         word = parts[1].strip().lower()
         if not db.query(NegativeKeyword).filter_by(word=word).first():
